@@ -1,0 +1,29 @@
+{
+  "name": "aws-lambda-ssl-expiry",
+  "version": "0.0.0",
+  "description": "Yell about your expiring SSL certificates before they expire",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jbuck/aws-lambda-ssl-expiry.git"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "ssl",
+    "expiry",
+    "expiration"
+  ],
+  "author": "Jon Buckley <jon@jbuckley.ca>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/jbuck/aws-lambda-ssl-expiry/issues"
+  },
+  "homepage": "https://github.com/jbuck/aws-lambda-ssl-expiry#readme",
+  "dependencies": {
+    "async": "^2.1.2",
+    "aws-sdk": "2.6.3"
+  }
+}
