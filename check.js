@@ -41,33 +41,29 @@ const listCertificates = (list_callback) => {
 };
 
 const listDistributions = (list_callback) => {
-  var distributions = [];
+  var distributions = {};
 
   cloudfront.listDistributions().eachPage((err, data) => {
     if (err) {
       return list_callback(err);
     }
 
-    if (data) {
-      distributions = distributions.concat(data.DistributionList.Items);
-      return;
+    if (!data) {
+      list_callback(null, distributions);
     }
 
-    var rv = {};
-    distributions.filter((d) => {
+    data.filter((d) => {
       return !!d.ViewerCertificate.IAMCertificateId;
     }).forEach((d) => {
-      if (!rv[d.ViewerCertificate.IAMCertificateId]) {
-        rv[d.ViewerCertificate.IAMCertificateId] = [];
+      if (![d.ViewerCertificate.IAMCertificateId]) {
+        distributions[d.ViewerCertificate.IAMCertificateId] = [];
       }
 
-      rv[d.ViewerCertificate.IAMCertificateId].push({
+      distributions[d.ViewerCertificate.IAMCertificateId].push({
         id: d.Id,
         aliases: d.Aliases.Items,
       });
     });
-
-    list_callback(null, rv);
   });
 };
 
