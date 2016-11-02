@@ -49,7 +49,7 @@ const listDistributions = (list_callback) => {
     }
 
     if (!data) {
-      list_callback(null, distributions);
+      return list_callback(null, distributions);
     }
 
     data.DistributionList.Items.filter((d) => {
