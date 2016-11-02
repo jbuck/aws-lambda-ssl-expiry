@@ -52,10 +52,10 @@ const listDistributions = (list_callback) => {
       list_callback(null, distributions);
     }
 
-    data.filter((d) => {
+    data.DistributionList.Items.filter((d) => {
       return !!d.ViewerCertificate.IAMCertificateId;
     }).forEach((d) => {
-      if (![d.ViewerCertificate.IAMCertificateId]) {
+      if (!distributions[d.ViewerCertificate.IAMCertificateId]) {
         distributions[d.ViewerCertificate.IAMCertificateId] = [];
       }
 
