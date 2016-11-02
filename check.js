@@ -1,21 +1,19 @@
 const async = require('async');
 const AWS = require('aws-sdk');
 const cloudfront = new AWS.CloudFront();
-const elbv1 = new AWS.ELB();
-const elbv2 = new AWS.ELBv2();
 const iam = new AWS.IAM();
 
 exports.run = (event, context, callback) => {
   async.parallel({
     certificates: listCertificates,
     distributions: listDistributions,
-    elbv1: listClassicLoadBalancers
+    elb: listClassicLoadBalancers
   }, (err, results) => {
     if (err) {
       console.log(err);
     }
 
-    printOutput(results.certificates, results.distributions, results.elbv1);
+    printOutput(results.certificates, results.distributions, results.elb);
   });
 };
 
@@ -67,10 +65,47 @@ const listDistributions = (list_callback) => {
   });
 };
 
+const lbRegions = [
+  "ap-northeast-1",
+  "ap-northeast-2",
+  "ap-south-1",
+  "ap-southeast-1",
+  "ap-southeast-2",
+  "eu-central-1",
+  "eu-west-1",
+  "sa-east-1",
+  "us-east-1",
+  "us-east-2",
+  "us-west-1",
+  "us-west-2"
+];
+
 const listClassicLoadBalancers = (list_callback) => {
+  var rv = {};
+
+  async.eachLimit(lbRegions, 2, (region, region_callback) => {
+    const elb = new AWS.ELB({ region: region });
+
+    _listClassicLoadBalancers(elb, (elb_error, data) => {
+      Object.keys(data).forEach((d) => {
+        if (!rv[d]) {
+          rv[d] = [];
+        }
+
+        rv[d] = rv[d].concat(data[d]);
+      });
+
+      region_callback(elb_error);
+    });
+  }, (region_error) => {
+    list_callback(region_error, rv);
+  });
+};
+
+const _listClassicLoadBalancers = (elb, list_callback) => {
   var loadBalancers = [];
 
-  elbv1.describeLoadBalancers().eachPage((err, data) => {
+  elb.describeLoadBalancers().eachPage((err, data) => {
     if (err) {
       return list_callback(err);
     }
@@ -96,7 +131,7 @@ const listClassicLoadBalancers = (list_callback) => {
         }
 
         rv[ld.Listener.SSLCertificateId].push({
-          name: lb.LoadBalancerName + ":" + ld.Listener.LoadBalancerPort
+          name: elb.config.region + ":" + lb.LoadBalancerName + ":" + ld.Listener.LoadBalancerPort
         });
       });
     });
@@ -109,7 +144,7 @@ const twoWeeksFromNow = Date.now() + (14 * 24 * 60 * 60 * 1000);
 const now = Date.now();
 const verbose = true;
 
-const printOutput = (certificates, distributions, elbv1) => {
+const printOutput = (certificates, distributions, elb) => {
   certificates.forEach((c) => {
     if (c.Expiration < now) {
       console.log("EXPIRED %s on %s", c.Arn, c.Expiration.toISOString());
@@ -127,8 +162,8 @@ const printOutput = (certificates, distributions, elbv1) => {
       });
     }
 
-    if (elbv1[c.Arn]) {
-      elbv1[c.Arn].forEach((e) => {
+    if (elb[c.Arn]) {
+      elb[c.Arn].forEach((e) => {
         console.log("        Elastic Load Balancer %s", e.name);
       });
     }
